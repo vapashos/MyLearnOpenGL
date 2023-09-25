@@ -32,7 +32,7 @@ class VertexShader : public Shader
 {
 public:
     // Constructor - Destructor
-    VertexShader(const GLenum glEnumTarget,const GLenum glUsage);
+    VertexShader(const GLenum glEnumTarget,const GLenum glUsage, const float* vertices);
     virtual ~VertexShader();
 
     // virtual functions
@@ -41,7 +41,6 @@ public:
     
     // function
     unsigned int    VAO() const;
-    void            BindVertices(const float* vertices, const int numofvertices);
     void            Draw() const;
     
     
@@ -54,14 +53,14 @@ protected:
     unsigned int _glUsage;      // GL_STREAM_DRAW , GL_STATIC_DRAW, GL_DYNAMIC_DRAW
     unsigned int _VAO{0};       // Vertex Array Object
     // Protected member functions
-    
+    void pBindVertices(const float* vertices);
 
 };
 
 class TriaVertexShader : public VertexShader
 {
 public:
-    TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage);
+    TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage,const float* vertices);
     virtual ~TriaVertexShader() = default;
 
     virtual GLenum  Mode()        const override;       // return GL_TRIANGLES
@@ -86,21 +85,18 @@ protected:
 class ShaderProgram
 {
 public:
-    ShaderProgram(const GLenum vShaderTarget, const GLenum vShaderUsage,const float* vertices, int numofvertices);
-    void         Draw()  const;
+    ShaderProgram(const GLuint vShaderID, const GLuint fShaderID);
+
     unsigned int GetID() const;
     void         Clear() const;
     void         Use()   const;
-    const std::unique_ptr<VertexShader>& getVertexShader() const { return _vShader; };
-    const std::unique_ptr<FragmentShader>& getFragmentShader() const { return _fShader; };
+
 private:
-    
+    GLuint       _vShaderID{ 0 };
+    GLuint       _fShaderID{ 0 };
     bool         _status{ false };
     unsigned int _id;
     
-    std::unique_ptr<VertexShader>   _vShader;
-    std::unique_ptr<FragmentShader> _fShader;
-
     bool pLink()        const;
     bool pValidate()    const;
 };

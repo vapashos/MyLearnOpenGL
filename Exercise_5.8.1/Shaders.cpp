@@ -57,7 +57,7 @@ bool Shader::pCompile() const
 // ---------------------------------------------------------------------------------------------------------------
 int VertexShader::sVertexShaderID = 0;
 
-VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage)
+VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage, const float* vertices)
     : Shader("#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "void main()\n"
@@ -67,6 +67,7 @@ VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage)
 {
     _id_vbo = ++sVertexShaderID;
     pCreate();
+    pBindVertices(vertices);
 }
 
 VertexShader::~VertexShader()
@@ -82,13 +83,15 @@ unsigned int VertexShader::VAO() const
     return _VAO;
 }
 
-void VertexShader::BindVertices(const float* vertices,const int numofvertices)
+void VertexShader::pBindVertices(const float* vertices)
 {
-#if 0
-    const unsigned int _id_vao = _id_vbo;
+
+    const unsigned int _id_vao = 1;
+    const unsigned int _id_vbo = 1;
+
+    glGenVertexArrays(_id_vao, &_VAO);
     glGenBuffers(_id_vbo, &_VBO);
     //// VAO Generate and Bind
-    glGenVertexArrays(_id_vao, &_VAO);
     glBindVertexArray(_VAO);
      
     // VBO Generate and Bind
@@ -101,27 +104,7 @@ void VertexShader::BindVertices(const float* vertices,const int numofvertices)
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-#endif
-    unsigned int id_vbo = 1;
-    unsigned int id_vao = 1;
-    unsigned int VBO;
-    unsigned int VAO;
 
-    glGenVertexArrays(id_vao, &VAO);
-    glBindVertexArray(VAO);
-    // --------------------------------------------------------------------------
-    glGenBuffers(id_vbo, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // --------------------------------------------------------------------------
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    _VBO = VBO;
-    _VAO = VAO;
 }
 
 void VertexShader::Draw() const
@@ -135,8 +118,8 @@ void VertexShader::Draw() const
 // TriaVertexShader 
 // ---------------------------------------------------------------------------------------------------------------
 
-TriaVertexShader::TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage)
-    :VertexShader(glEnumTarget, glUsage)
+TriaVertexShader::TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage, const float* vertices)
+    :VertexShader(glEnumTarget, glUsage, vertices)
 {
 }
 
@@ -175,30 +158,18 @@ FragmentShader::~FragmentShader()
         assert(0);
 }
 
-ShaderProgram::ShaderProgram(const GLenum vShaderTarget, const GLenum vShaderUsage,const float* vertices, int numofvertices)
-    : _id(0)
+ShaderProgram::ShaderProgram(const GLuint vShaderID,const GLuint fShaderID)
+    : _id(0),_vShaderID(vShaderID),_fShaderID(fShaderID)
 {
-    _vShader = std::make_unique<TriaVertexShader>(vShaderTarget, vShaderUsage);
-    _fShader = std::make_unique<FragmentShader>();
-
     _id = glCreateProgram();
 
-    if (_vShader->IsOk() && _fShader->IsOk())
+    if (_fShaderID* _vShaderID)
     {
-        glAttachShader(_id, _vShader->GetID());  // Attach Vertex   Shader.
-        glAttachShader(_id, _fShader->GetID());  // Attach Fragment Shader.
+        glAttachShader(_id, _vShaderID);  // Attach Vertex   Shader.
+        glAttachShader(_id, _fShaderID);  // Attach Fragment Shader.
         _status = pLink();
         _status &= pValidate();
-        //glDeleteShader(_vShader->GetID());
-        //glDeleteShader(_fShader->GetID());
     }
-    //_vShader->BindVertices(vertices, numofvertices);
-}
-
-void ShaderProgram::Draw() const
-{
-    if (_status)
-        _vShader->Draw();
 }
 
 unsigned int ShaderProgram::GetID() const
