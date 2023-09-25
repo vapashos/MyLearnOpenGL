@@ -5,39 +5,26 @@
 
 int main()
 {
-    float vertices[] = {
-    -0.5f, -0.5f, 0.0f, // left  
-     0.5f, -0.5f, 0.0f, // right 
-     0.0f,  0.5f, 0.0f  // top   
-    };
+    try {
+        GLWindow glWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
+        float vertices[] = {
+        -0.5f, -0.5f, 0.0f, // left  
+         0.5f, -0.5f, 0.0f, // right 
+         0.0f,  0.5f, 0.0f  // top   
+        };
 
+        VertexShader::Definition triaDefinition{ GL_ARRAY_BUFFER, 
+                                                 GL_STATIC_DRAW, 
+                                                 vertices, 
+                                                 sizeof(vertices) / sizeof(vertices[0]) };
 
-    GLWindow glWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
-    GladInitiator gInit;
-    auto _window = glWindow.GetWindow();
-    
-    TriaVertexShader triaShader(GL_ARRAY_BUFFER, GL_STATIC_DRAW, vertices);
-    FragmentShader   fragShader;
-
-    ShaderProgram sprogram(triaShader.GetID(),fragShader.GetID());
-
-
-    // Render loop
-    while (!glfwWindowShouldClose(_window))
-    {
-        if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(_window, true);
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        sprogram.Use();
-        glBindVertexArray(triaShader.VAO());
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glBindVertexArray(0);
-        glfwSwapBuffers(_window);
-        glfwPollEvents();
+        ShaderProgram sprogram(triaDefinition);
+        glWindow.Run(sprogram);
     }
-
-    glfwTerminate();
+    catch (...)
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+    }
 
     //system("pause");
 }

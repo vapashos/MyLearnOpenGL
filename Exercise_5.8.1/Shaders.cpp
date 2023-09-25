@@ -57,7 +57,7 @@ bool Shader::pCompile() const
 // ---------------------------------------------------------------------------------------------------------------
 int VertexShader::sVertexShaderID = 0;
 
-VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage, const float* vertices)
+VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage, const float* vertices,const int verticesNum)
     : Shader("#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "void main()\n"
@@ -67,7 +67,7 @@ VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage, cons
 {
     _id_vbo = ++sVertexShaderID;
     pCreate();
-    pBindVertices(vertices);
+    pBindVertices(vertices, verticesNum);
 }
 
 VertexShader::~VertexShader()
@@ -76,6 +76,9 @@ VertexShader::~VertexShader()
         sVertexShaderID--;
     else
         assert(0);
+    
+    glDeleteVertexArrays(_id, &_VAO);
+    glDeleteBuffers(_id, &_VBO);
 }
 
 unsigned int VertexShader::VAO() const
@@ -83,11 +86,9 @@ unsigned int VertexShader::VAO() const
     return _VAO;
 }
 
-void VertexShader::pBindVertices(const float* vertices)
+void VertexShader::pBindVertices(const float* vertices, const int verticesNum)
 {
-
-    const unsigned int _id_vao = 1;
-    const unsigned int _id_vbo = 1;
+    const unsigned int _id_vao = _id_vbo;
 
     glGenVertexArrays(_id_vao, &_VAO);
     glGenBuffers(_id_vbo, &_VBO);
@@ -96,10 +97,11 @@ void VertexShader::pBindVertices(const float* vertices)
      
     // VBO Generate and Bind
     glBindBuffer(_glTarget, _VBO);
-    glBufferData(_glTarget, sizeof(vertices), vertices, _glUsage);
+    glBufferData(_glTarget, verticesNum*sizeof(vertices[0]), vertices, _glUsage);
 
     // Number of vertices
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    const GLuint location_index = 0;
+    glVertexAttribPointer(location_index, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -118,8 +120,8 @@ void VertexShader::Draw() const
 // TriaVertexShader 
 // ---------------------------------------------------------------------------------------------------------------
 
-TriaVertexShader::TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage, const float* vertices)
-    :VertexShader(glEnumTarget, glUsage, vertices)
+TriaVertexShader::TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage, const float* vertices, const int verticesNum)
+    :VertexShader(glEnumTarget, glUsage, vertices,verticesNum)
 {
 }
 
@@ -158,18 +160,28 @@ FragmentShader::~FragmentShader()
         assert(0);
 }
 
-ShaderProgram::ShaderProgram(const GLuint vShaderID,const GLuint fShaderID)
-    : _id(0),_vShaderID(vShaderID),_fShaderID(fShaderID)
+ShaderProgram::ShaderProgram(const VertexShader::Definition& vDefinition)
+    : _id(0), _vShaderPtr(new TriaVertexShader(vDefinition.TARGET, vDefinition.USAGE, vDefinition.VERTICES, vDefinition.VERTICES_NUM)),_fShaderPtr(new FragmentShader())
 {
     _id = glCreateProgram();
 
-    if (_fShaderID* _vShaderID)
+    const unsigned int vShaderID = _vShaderPtr->GetID();
+    const unsigned int fShaderID = _fShaderPtr->GetID();
+
+    if (fShaderID * vShaderID)
     {
-        glAttachShader(_id, _vShaderID);  // Attach Vertex   Shader.
-        glAttachShader(_id, _fShaderID);  // Attach Fragment Shader.
+        glAttachShader(_id, vShaderID);  // Attach Vertex   Shader.
+        glAttachShader(_id, fShaderID);  // Attach Fragment Shader.
         _status = pLink();
         _status &= pValidate();
     }
+}
+
+ShaderProgram::~ShaderProgram()
+{
+    delete _vShaderPtr;
+    delete _fShaderPtr;
+    glDeleteProgram(_id);
 }
 
 unsigned int ShaderProgram::GetID() const
@@ -177,18 +189,27 @@ unsigned int ShaderProgram::GetID() const
     return _id;
 }
 
-void ShaderProgram::Clear() const
+void ShaderProgram::Reset()
 {
-    unsigned int VAO,VBO;
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+    if (_status)
+    {
+        delete _vShaderPtr;
+        delete _fShaderPtr;
+
+        _vShaderPtr = nullptr;
+        _fShaderPtr = nullptr;
+    }
+    _status = false;
     glDeleteProgram(_id);
 }
 
-void ShaderProgram::Use() const
+void ShaderProgram::Execute() const
 {
-    if(_status)
+    if (_vShaderPtr)
+    {
         glUseProgram(_id);
+        _vShaderPtr->Draw();
+    }
 }
 
 bool ShaderProgram::pLink() const

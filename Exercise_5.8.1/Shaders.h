@@ -31,8 +31,17 @@ protected:
 class VertexShader : public Shader
 {
 public:
+
+    struct Definition
+    {
+        unsigned int TARGET;
+        unsigned int USAGE;
+        const float* VERTICES;
+        const int    VERTICES_NUM;
+    };
+
     // Constructor - Destructor
-    VertexShader(const GLenum glEnumTarget,const GLenum glUsage, const float* vertices);
+    VertexShader(const GLenum glEnumTarget,const GLenum glUsage, const float* vertices, const int verticesNum);
     virtual ~VertexShader();
 
     // virtual functions
@@ -53,14 +62,14 @@ protected:
     unsigned int _glUsage;      // GL_STREAM_DRAW , GL_STATIC_DRAW, GL_DYNAMIC_DRAW
     unsigned int _VAO{0};       // Vertex Array Object
     // Protected member functions
-    void pBindVertices(const float* vertices);
+    void pBindVertices(const float* vertices, const int verticesNum);
 
 };
 
 class TriaVertexShader : public VertexShader
 {
 public:
-    TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage,const float* vertices);
+    TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage,const float* vertices, const int verticesNum);
     virtual ~TriaVertexShader() = default;
 
     virtual GLenum  Mode()        const override;       // return GL_TRIANGLES
@@ -85,17 +94,17 @@ protected:
 class ShaderProgram
 {
 public:
-    ShaderProgram(const GLuint vShaderID, const GLuint fShaderID);
-
-    unsigned int GetID() const;
-    void         Clear() const;
-    void         Use()   const;
+    ShaderProgram(const VertexShader::Definition& vDefinition);
+    ~ShaderProgram();
+    unsigned int GetID()     const;
+    void         Execute()   const;
+    void         Reset();
 
 private:
-    GLuint       _vShaderID{ 0 };
-    GLuint       _fShaderID{ 0 };
-    bool         _status{ false };
-    unsigned int _id;
+    VertexShader*   _vShaderPtr;
+    FragmentShader* _fShaderPtr;
+    bool            _status{ false };
+    unsigned int    _id;
     
     bool pLink()        const;
     bool pValidate()    const;

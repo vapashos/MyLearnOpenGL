@@ -13,7 +13,7 @@ public:
 
     const GLFWwindow* GetWindowConst() const;
     GLFWwindow* GetWindow() const;
-    void Run(const ShaderProgram& program);
+    void Run(ShaderProgram& program);
 
 private:
 
@@ -25,17 +25,4 @@ private:
     void pProcessInput();
     void pInitGLFWOpenGLCore(float versionOpenGL) const;
 
-};
-
-class GladInitiator
-{
-public:
-    GladInitiator()
-    {
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-        {
-            std::cout << "Failed to initialize GLAD" << std::endl;
-            throw - 1;
-        }
-    }
 };

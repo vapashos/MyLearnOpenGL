@@ -21,6 +21,11 @@ GLWindow::GLWindow(const int WIDTH, const int HEIGHT, const char* title)
     }
     glfwMakeContextCurrent(_window);
     glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        throw - 1;
+    }
 }
 
 const GLFWwindow* GLWindow::GetWindowConst() const
@@ -34,18 +39,20 @@ GLFWwindow* GLWindow::GetWindow() const
     return _window;
 }
 
-void GLWindow::Run(const ShaderProgram& program)
+void GLWindow::Run(ShaderProgram& program)
 {
     if (_window)
     {
         while (!glfwWindowShouldClose(_window))
         {
             pProcessInput();
-            
+            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            program.Execute();
             glfwSwapBuffers(_window);
             glfwPollEvents();
         }
-        program.Clear();
+        program.Reset();
         glfwTerminate();
     }
 }
