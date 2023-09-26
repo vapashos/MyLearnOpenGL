@@ -7,18 +7,26 @@ int main()
 {
     try {
         GLWindow glWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
-        float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left  
-         0.5f, -0.5f, 0.0f, // right 
-         0.0f,  0.5f, 0.0f  // top   
+        float vertices_tria[] = {
+        -1.0f, -0.5f, 0.0f,  // triangle 1 left  
+         0.0f, -0.5f, 0.0f,  // triangle 1 right 
+         -0.5f,  0.5f, 0.0f, // triangle 1 top           
+         0.0f, -0.5f, 0.0f,  // triangle 2 left
+         1.0,-0.5f, 0.0f,
+         0.5f,0.5f,0.0f
         };
 
-        VertexShader::Definition triaDefinition{ GL_ARRAY_BUFFER, 
-                                                 GL_STATIC_DRAW, 
-                                                 vertices, 
-                                                 sizeof(vertices) / sizeof(vertices[0]) };
+        const int verticesNum = sizeof(vertices_tria)/sizeof(vertices_tria[0]);
+
+        VertexShader::Definition triaDefinition{ GL_ARRAY_BUFFER,
+                                                 GL_STATIC_DRAW,
+                                                 vertices_tria,
+                                                 verticesNum,
+                                                 GL_TRIANGLES};
+
 
         ShaderProgram sprogram(triaDefinition);
+
         glWindow.Run(sprogram);
     }
     catch (...)

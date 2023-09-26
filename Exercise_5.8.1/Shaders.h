@@ -18,7 +18,7 @@ protected:
     int          _id_vbo        { 0 };          // id of vbo which correspond to the shader's data.
     unsigned int _VBO           { 0 };
     unsigned int _id            { 0 };          // shader's is
-    bool         _status       { false };       // status of compilation
+    bool         _status        { false };      // status of compilation
     // Member functions 
     void pCreate();
     bool pCompile() const;
@@ -38,20 +38,16 @@ public:
         unsigned int USAGE;
         const float* VERTICES;
         const int    VERTICES_NUM;
+        const GLenum DRAW_MODE;
     };
 
     // Constructor - Destructor
     VertexShader(const GLenum glEnumTarget,const GLenum glUsage, const float* vertices, const int verticesNum);
-    virtual ~VertexShader();
+    ~VertexShader();
 
-    // virtual functions
-    virtual GLenum  Mode()          const = 0;
-    virtual GLsizei VerticesNum()  const = 0;
-    
     // function
-    unsigned int    VAO() const;
-    void            Draw() const;
-    
+    unsigned int    VAO()                   const;
+    void            Draw(const GLenum mode) const;
     
     // Static members
     static int sVertexShaderID;
@@ -59,24 +55,13 @@ public:
 protected:
     // Protected member variables
     unsigned int _glTarget;
-    unsigned int _glUsage;      // GL_STREAM_DRAW , GL_STATIC_DRAW, GL_DYNAMIC_DRAW
-    unsigned int _VAO{0};       // Vertex Array Object
+    unsigned int _glUsage;          // GL_STREAM_DRAW , GL_STATIC_DRAW, GL_DYNAMIC_DRAW
+    unsigned int _VAO{0};           // Vertex Array Object
+    int          _verticesNum{ 0 }; // Number of vertices to draw
     // Protected member functions
     void pBindVertices(const float* vertices, const int verticesNum);
 
 };
-
-class TriaVertexShader : public VertexShader
-{
-public:
-    TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage,const float* vertices, const int verticesNum);
-    virtual ~TriaVertexShader() = default;
-
-    virtual GLenum  Mode()        const override;       // return GL_TRIANGLES
-    virtual GLsizei VerticesNum() const override;       // return GL_TRIANGLES
-    
-};
-
 
 class FragmentShader : public Shader
 {
@@ -105,6 +90,7 @@ private:
     FragmentShader* _fShaderPtr;
     bool            _status{ false };
     unsigned int    _id;
+    GLenum          _drawMode;
     
     bool pLink()        const;
     bool pValidate()    const;

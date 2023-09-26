@@ -63,11 +63,12 @@ VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage, cons
         "void main()\n"
         "{\n"
         "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0", GL_VERTEX_SHADER), _glTarget(glEnumTarget), _glUsage(glUsage)
+        "}\0", GL_VERTEX_SHADER), _glTarget(glEnumTarget), _glUsage(glUsage), _verticesNum(verticesNum)
 {
     _id_vbo = ++sVertexShaderID;
     pCreate();
     pBindVertices(vertices, verticesNum);
+    
 }
 
 VertexShader::~VertexShader()
@@ -104,35 +105,16 @@ void VertexShader::pBindVertices(const float* vertices, const int verticesNum)
     glVertexAttribPointer(location_index, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(_glTarget, 0);
     glBindVertexArray(0);
 
 }
 
-void VertexShader::Draw() const
+void VertexShader::Draw(const GLenum mode) const
 {
     glBindVertexArray(_VAO);
-    glDrawArrays(Mode(), 0, VerticesNum());
+    glDrawArrays(mode, 0, _verticesNum);
     glBindVertexArray(0);
-}
-
-// ---------------------------------------------------------------------------------------------------------------
-// TriaVertexShader 
-// ---------------------------------------------------------------------------------------------------------------
-
-TriaVertexShader::TriaVertexShader(const GLenum glEnumTarget, const GLenum glUsage, const float* vertices, const int verticesNum)
-    :VertexShader(glEnumTarget, glUsage, vertices,verticesNum)
-{
-}
-
-GLenum TriaVertexShader::Mode() const
-{
-    return GL_TRIANGLES;
-}
-
-GLsizei TriaVertexShader::VerticesNum() const
-{
-    return 3;
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -161,7 +143,8 @@ FragmentShader::~FragmentShader()
 }
 
 ShaderProgram::ShaderProgram(const VertexShader::Definition& vDefinition)
-    : _id(0), _vShaderPtr(new TriaVertexShader(vDefinition.TARGET, vDefinition.USAGE, vDefinition.VERTICES, vDefinition.VERTICES_NUM)),_fShaderPtr(new FragmentShader())
+    : _id(0), _vShaderPtr(new VertexShader(vDefinition.TARGET, vDefinition.USAGE, vDefinition.VERTICES, vDefinition.VERTICES_NUM)),
+      _fShaderPtr(new FragmentShader()), _drawMode(vDefinition.DRAW_MODE)
 {
     _id = glCreateProgram();
 
@@ -208,7 +191,7 @@ void ShaderProgram::Execute() const
     if (_vShaderPtr)
     {
         glUseProgram(_id);
-        _vShaderPtr->Draw();
+        _vShaderPtr->Draw(_drawMode);
     }
 }
 
