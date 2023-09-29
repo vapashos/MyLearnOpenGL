@@ -27,7 +27,8 @@ void Shader::pCreate()
     _id = glCreateShader(_type);
 
     // Attach shader's source code to the shader object and compile the shader
-    glShaderSource(_id, 1, &_shaderStr, NULL);
+    _shaderString = _shaderStr.c_str();
+    glShaderSource(_id, 1, &_shaderString, NULL);
 
     // At the end compile shader's code.
     _status = pCompile();
@@ -74,12 +75,12 @@ VertexShader::VertexShader(const GLenum glEnumTarget, const GLenum glUsage, cons
 VertexShader::~VertexShader()
 {
     if (sVertexShaderID > 0)
+    {
         sVertexShaderID--;
-    else
-        assert(0);
-    
-    glDeleteVertexArrays(_id, &_VAO);
-    glDeleteBuffers(_id, &_VBO);
+
+        glDeleteVertexArrays(_id, &_VAO);
+        glDeleteBuffers(_id, &_VBO);
+    }
 }
 
 unsigned int VertexShader::VAO() const
@@ -122,14 +123,22 @@ void VertexShader::Draw(const GLenum mode) const
 // ---------------------------------------------------------------------------------------------------------------
 int FragmentShader::sFragmentShaderID = 0;
 
-FragmentShader::FragmentShader()
+FragmentShader::FragmentShader(const Definition& color)
     : Shader("#version 330 core\n"
-             "out vec4 FragColor;\n"
-             "void main()\n"
-             "{\n"
-             "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-             "}\n\0", GL_FRAGMENT_SHADER)
+        "out vec4 FragColor;\n"
+        "void main()\n"
+        "{\n"
+        "   FragColor =",GL_FRAGMENT_SHADER)
 {
+    _shaderStr.append(" vec4(");
+    _shaderStr.append(std::to_string(color.RED).substr(0, 3)); // RED
+    _shaderStr.append("f, ");
+    _shaderStr.append(std::to_string(color.GREEN).substr(0, 3)); // GREEN
+    _shaderStr.append("f, ");
+    _shaderStr.append(std::to_string(color.BLUE).substr(0, 3)); // BLUE
+    _shaderStr.append("f, 1.0);\n}\n");
+    
+    
     _id_vbo = ++sFragmentShaderID;
     pCreate();
 }
@@ -138,15 +147,16 @@ FragmentShader::~FragmentShader()
 {
     if (sFragmentShaderID > 0)
         sFragmentShaderID--;
-    else
-        assert(0);
 }
 
-ShaderProgram::ShaderProgram(const VertexShader::Definition& vDefinition)
-    : _id(0), _vShaderPtr(new VertexShader(vDefinition.TARGET, vDefinition.USAGE, vDefinition.VERTICES, vDefinition.VERTICES_NUM)),
-      _fShaderPtr(new FragmentShader()), _drawMode(vDefinition.DRAW_MODE)
+ShaderProgram::ShaderProgram(const VertexShader::Definition& vDefinition, const FragmentShader::Definition& fDefinition)
+    : _id(0),
+      _fShaderPtr(new FragmentShader(fDefinition)), _drawMode(vDefinition.DRAW_MODE)
 {
     _id = glCreateProgram();
+    _vShaderPtrVec.push_back(new VertexShader(vDefinition.TARGET, vDefinition.USAGE, vDefinition.VERTICES, vDefinition.VERTICES_NUM));
+    
+    const auto& _vShaderPtr = _vShaderPtrVec.back();
 
     const unsigned int vShaderID = _vShaderPtr->GetID();
     const unsigned int fShaderID = _fShaderPtr->GetID();
@@ -162,7 +172,8 @@ ShaderProgram::ShaderProgram(const VertexShader::Definition& vDefinition)
 
 ShaderProgram::~ShaderProgram()
 {
-    delete _vShaderPtr;
+    for (auto _vShaderPtr : _vShaderPtrVec)
+        delete _vShaderPtr;
     delete _fShaderPtr;
     glDeleteProgram(_id);
 }
@@ -176,22 +187,33 @@ void ShaderProgram::Reset()
 {
     if (_status)
     {
-        delete _vShaderPtr;
+        for(auto& _vShaderPtr : _vShaderPtrVec)
+        {
+            delete _vShaderPtr;
+            _vShaderPtr = nullptr;
+        }
         delete _fShaderPtr;
-
-        _vShaderPtr = nullptr;
         _fShaderPtr = nullptr;
     }
     _status = false;
     glDeleteProgram(_id);
 }
 
+void ShaderProgram::AddVertexShader(const VertexShader::Definition& vDefinition)
+{
+    _vShaderPtrVec.push_back(new VertexShader(vDefinition.TARGET, vDefinition.USAGE, vDefinition.VERTICES, vDefinition.VERTICES_NUM));
+    const unsigned int vShaderID = _vShaderPtrVec.back()->GetID();
+    glAttachShader(_id, vShaderID);
+
+}
+
 void ShaderProgram::Execute() const
 {
-    if (_vShaderPtr)
+    if (!_vShaderPtrVec.empty())
     {
         glUseProgram(_id);
-        _vShaderPtr->Draw(_drawMode);
+        for(auto _vShaderPtr:_vShaderPtrVec)
+            _vShaderPtr->Draw(_drawMode);
     }
 }
 

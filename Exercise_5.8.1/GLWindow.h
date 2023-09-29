@@ -13,7 +13,7 @@ public:
 
     const GLFWwindow* GetWindowConst() const;
     GLFWwindow* GetWindow() const;
-    void Run(ShaderProgram& program);
+    void Run(const std::vector<ShaderProgram*>& program);
 
 private:
 

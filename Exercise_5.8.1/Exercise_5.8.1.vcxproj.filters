@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Exercise_5.8.1.cpp">
+    <ClCompile Include="Exercises_5.8.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Libs\Opengl\GLAD\src\glad.c">

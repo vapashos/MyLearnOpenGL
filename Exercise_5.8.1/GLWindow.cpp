@@ -39,7 +39,7 @@ GLFWwindow* GLWindow::GetWindow() const
     return _window;
 }
 
-void GLWindow::Run(ShaderProgram& program)
+void GLWindow::Run(const std::vector<ShaderProgram*>& programs)
 {
     if (_window)
     {
@@ -48,11 +48,14 @@ void GLWindow::Run(ShaderProgram& program)
             pProcessInput();
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            program.Execute();
+            for(const auto program: programs)
+                program->Execute();
             glfwSwapBuffers(_window);
             glfwPollEvents();
         }
-        program.Reset();
+
+        for (auto program : programs)
+            program->Reset();
         glfwTerminate();
     }
 }
