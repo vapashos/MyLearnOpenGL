@@ -149,9 +149,11 @@ FragmentShader::~FragmentShader()
         sFragmentShaderID--;
 }
 
-ShaderProgram::ShaderProgram(const VertexShader::Definition& vDefinition, const FragmentShader::Definition& fDefinition)
-    : _id(0),
-      _fShaderPtr(new FragmentShader(fDefinition)), _drawMode(vDefinition.DRAW_MODE)
+ShaderProgram::ShaderProgram(const VertexShader::Definition&   vDefinition, 
+                             const FragmentShader::Definition& fDefinition)
+                            : _id(0),
+                              _fShaderPtr(new FragmentShader(fDefinition)), 
+                              _drawMode(vDefinition.DRAW_MODE)
 {
     _id = glCreateProgram();
     _vShaderPtrVec.push_back(new VertexShader(vDefinition.TARGET, vDefinition.USAGE, vDefinition.VERTICES, vDefinition.VERTICES_NUM));

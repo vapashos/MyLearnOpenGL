@@ -15,7 +15,7 @@ public:
     bool            IsOk()  const;
 protected:
     // Member variables
-    GLenum       _type;                         // GL_VERTEX_SHADER, GL_FRAGMENT_SHADER 
+    GLenum       _type;                             // GL_VERTEX_SHADER, GL_FRAGMENT_SHADER 
     std::string  _shaderStr;
     int          _id_vbo            { 0 };          // id of vbo which correspond to the shader's data.
     unsigned int _VBO               { 0 };
@@ -93,7 +93,8 @@ protected:
 class ShaderProgram
 {
 public:
-    ShaderProgram(const VertexShader::Definition& vDefinition, const FragmentShader::Definition& fDefon);
+    ShaderProgram(const VertexShader::Definition&   vDefinition, 
+                  const FragmentShader::Definition& fDefinition);
     ~ShaderProgram();
     unsigned int GetID()     const;
     void         Execute()   const;
